@@ -49,6 +49,9 @@ const navigate = useNavigate();
           <button className="form-button" type="submit">
             Login
           </button>
+          <button className="form-button" onClick={()=> navigate("/register")}>
+            Don't have an account? Register now
+          </button>
         </form>
       </div>
     </div>
