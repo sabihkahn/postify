@@ -9,7 +9,23 @@ const Home = () => {
   const [posts, setPosts] = useState([]);
   const [activePost, setActivePost] = useState(null);
   const [showComments, setShowComments] = useState(false);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
+
+  // 🔐 Redirect to login if not logged in
+  useEffect(() => {
+    const raw = localStorage.getItem("user");
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed?.token && parsed?.user) {
+        setUser(parsed.user);
+      } else {
+        navigate("/login");
+      }
+    } catch {
+      navigate("/login");
+    }
+  }, [navigate]);
 
   const fetchPosts = async () => {
     try {
@@ -34,9 +50,6 @@ const Home = () => {
     setShowComments(!showComments);
   };
 
-  // Get logged-in user info
-  const user = JSON.parse(localStorage.getItem("user"));
-  const userId = user?._id;
   const profilePic = user?.photo?.data?.data
     ? `data:${user.photo.contentType};base64,${btoa(
         new Uint8Array(user.photo.data.data)
@@ -49,7 +62,7 @@ const Home = () => {
       <div className="top-bar">
         <h2 className="logo">Postify</h2>
         <div className="top-right">
-          <Link to={`/profile/${userId}`} className="profile-link">
+          <Link to={`/profile/${user?._id}`} className="profile-link">
             {profilePic ? (
               <img src={profilePic} className="profile-pic" alt="profile" />
             ) : (

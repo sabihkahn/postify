@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -9,9 +9,24 @@ const Upload = () => {
   const [preview, setPreview] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [filter, setFilter] = useState("none");
+  const [token, setToken] = useState("");
 
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = JSON.parse(localStorage.getItem("user"))?.user;
+
+  useEffect(() => {
+    const raw = localStorage.getItem("user");
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed?.token) {
+        setToken(parsed.token);
+      } else {
+        navigate("/login");
+      }
+    } catch {
+      navigate("/login");
+    }
+  }, []);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -26,7 +41,6 @@ const Upload = () => {
 
     setIsUploading(true);
 
-    // Step 1: Send to Backend
     const formData = new FormData();
     formData.append("photo", file);
     formData.append("title", title);
@@ -34,14 +48,14 @@ const Upload = () => {
     formData.append("creator", user._id);
     formData.append("likes", 0);
     formData.append("followers", 0);
-    formData.append("filter", filter); // you may save this in DB or skip if unsupported
+    formData.append("filter", filter);
 
     try {
-      const res = await axios.post("https://postifybackend.vercel.app/uplodimg", formData, {
+      await axios.post("https://postifybackend.vercel.app/uplodimg", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      // Step 2: Save in localStorage
+      // Save post in localStorage
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onloadend = () => {
@@ -64,11 +78,11 @@ const Upload = () => {
         localStorage.setItem("myPosts", JSON.stringify([post, ...oldPosts]));
 
         setIsUploading(false);
-        navigate("/");
+        navigate("/profile");
       };
     } catch (error) {
       console.error("Upload error:", error);
-      alert("Failed to upload. Check your connection or server.");
+      alert("Failed to upload. Try again later.");
       setIsUploading(false);
     }
   };
