@@ -78,7 +78,7 @@ const Upload = () => {
         localStorage.setItem("myPosts", JSON.stringify([post, ...oldPosts]));
 
         setIsUploading(false);
-        navigate("/profile");
+        navigate("/");
       };
     } catch (error) {
       console.error("Upload error:", error);

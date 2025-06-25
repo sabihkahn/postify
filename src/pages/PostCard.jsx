@@ -67,7 +67,7 @@ const PostCard = ({ post, onCommentClick }) => {
         ) : (
           <FaUserCircle className="creator-avatar default" />
         )}
-        <span className="creator-name">{post.creator || "Anonymous"}</span>
+        <span className="creator-name">{post.name || "Anonymous"}</span>
       </div>
 
       <img
