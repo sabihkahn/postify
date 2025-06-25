@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { FaUser, FaEnvelope, FaHeart, FaUserFriends } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
-// Convert deep nested buffer to base64 (user photo)
+// Convert nested user photo buffer to base64
 const bufferToBase64User = (photoObj) => {
   try {
     const byteArray = photoObj?.data?.data;
@@ -16,7 +16,7 @@ const bufferToBase64User = (photoObj) => {
   }
 };
 
-// For posts (you said they're working already)
+// For post photo (already in base64)
 const bufferToBase64Post = (photoObj) => {
   try {
     if (!photoObj?.data || !photoObj?.contentType) return null;
@@ -29,20 +29,25 @@ const bufferToBase64Post = (photoObj) => {
 const Profile = () => {
   const [user, setUser] = useState(null);
   const [userPosts, setUserPosts] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const rawUser = localStorage.getItem("user");
     const rawPosts = localStorage.getItem("myPosts");
 
-    if (rawUser) {
-      const userData = JSON.parse(rawUser);
-      setUser(userData.user);
-console.log("User data:", userData.user);
-      if (rawPosts) {
-        const allPosts = JSON.parse(rawPosts);
-        const filtered = allPosts.filter((post) => post.creator === userData._id);
-        setUserPosts(filtered);
-      }
+    if (!rawUser) {
+      navigate("/login");
+      return;
+    }
+
+    const userData = JSON.parse(rawUser);
+    const userObj = userData.user;
+    setUser(userObj);
+
+    if (rawPosts) {
+      const allPosts = JSON.parse(rawPosts);
+      const filtered = allPosts.filter((post) => post.creator === userObj._id);
+      setUserPosts(filtered);
     }
   }, []);
 
@@ -50,7 +55,6 @@ console.log("User data:", userData.user);
 
   const totalLikes = userPosts.reduce((sum, p) => sum + (p.likes || 0), 0);
   const totalFollowers = userPosts.reduce((sum, p) => sum + (p.followers || 0), 0);
-
   const profilePhoto = bufferToBase64User(user.photo);
 
   const filterStyles = {
@@ -64,50 +68,48 @@ console.log("User data:", userData.user);
     <div style={styles.container}>
       <div style={styles.header}>
         {profilePhoto ? (
-          <img
-            src={profilePhoto}
-            alt="User Avatar"
-            style={styles.avatar}
-          />
+          <img src={profilePhoto} alt="User Avatar" style={styles.avatar} />
         ) : (
           <div style={styles.avatarFallback}>Can't Load</div>
         )}
         <div>
           <h2><FaUser /> {user.name || "No name"}</h2>
           <p><FaEnvelope /> {user.email || "No email"}</p>
-<Link to="/" >
-  <button className="back">back</button>
-</Link>
-   
-   
+          <p><FaUserFriends /> {totalFollowers} Followers</p>
+          <p><FaHeart /> {totalLikes} Likes</p>
+          <Link to="/">
+            <button className="back">Back</button>
+          </Link>
         </div>
       </div>
 
       <div style={styles.grid}>
-        {userPosts.length > 0 ? userPosts.map((post) => (
-          <div key={post._id} style={styles.card}>
-            {post.photo ? (
-              <img
-                src={bufferToBase64Post(post.photo)}
-                alt={post.title}
-                style={{
-                  ...styles.image,
-                  filter: post.filter ? filterStyles[post.filter] : "",
-                }}
-              />
-            ) : (
-              <div style={styles.imageFallback}>Can't Load</div>
-            )}
-            <div style={styles.info}>
-              <h4>{post.title}</h4>
-              <p>{post.description}</p>
-              <div style={styles.stats}>
-                <span><FaHeart /> {post.likes}</span>
-                <span><FaUserFriends /> {post.followers}</span>
+        {userPosts.length > 0 ? (
+          userPosts.map((post) => (
+            <div key={post._id} style={styles.card}>
+              {post.photo ? (
+                <img
+                  src={bufferToBase64Post(post.photo)}
+                  alt={post.title}
+                  style={{
+                    ...styles.image,
+                    filter: post.filter ? filterStyles[post.filter] : "",
+                  }}
+                />
+              ) : (
+                <div style={styles.imageFallback}>Can't Load</div>
+              )}
+              <div style={styles.info}>
+                <h4>{post.title}</h4>
+                <p>{post.description}</p>
+                <div style={styles.stats}>
+                  <span><FaHeart /> {post.likes}</span>
+                  <span><FaUserFriends /> {post.followers}</span>
+                </div>
               </div>
             </div>
-          </div>
-        )) : (
+          ))
+        ) : (
           <p>No posts yet.</p>
         )}
       </div>
